@@ -254,7 +254,7 @@ class RustPlugin {
       process.env
     );
 
-    this.serverless.cli.log("Running containerized build");
+    this.serverless.cli.log("Running containerized build: ", args);
 
     return spawnSync(dockerCLI, args, NO_OUTPUT_CAPTURE);
   }
