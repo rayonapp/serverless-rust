@@ -56,6 +56,7 @@ class RustPlugin {
     // This poses a problem if the serverless yaml is inside a workspace,
     // and we want pull in other packages from the workspace
     this.srcPath = path.resolve(this.custom.dockerPath || this.servicePath);
+    this.serverless.cli.log(`Custom path ${this.srcPath} from dockerPath: ${this.custom.dockerPath}`);
 
     // By default, Serverless examines node_modules to figure out which
     // packages there are from dependencies versus devDependencies of a
