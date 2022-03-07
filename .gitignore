@@ -6,3 +6,4 @@ tests/integration/test-func/local-out.log
 tests/integration/test-func-dev/local-out.log
 .serverless
 coverage
+.idea/

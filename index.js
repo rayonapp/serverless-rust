@@ -47,6 +47,9 @@ class RustPlugin {
         dockerTag: DEFAULT_DOCKER_TAG,
         dockerImage: DEFAULT_DOCKER_IMAGE,
         dockerless: false,
+        targetDir: "./target/",
+        crateDir: "./",
+        linker: ""
       },
       (this.serverless.service.custom && this.serverless.service.custom.rust) ||
         {}
@@ -67,7 +70,11 @@ class RustPlugin {
   }
 
   localBuildArgs(funcArgs, cargoPackage, binary, profile, platform) {
-    const defaultArgs = ["build", "-p", cargoPackage];
+    const crateDir = (funcArgs || {}).crateDir ||
+        this.custom.crateDir;
+    const targetDir = (funcArgs || {}).targetDir ||
+        this.custom.targetDir;
+    const defaultArgs = ["build", `--manifest-path=${crateDir}/Cargo.toml`, "-p", cargoPackage, "--target-dir", `${targetDir}/target/`];
     const profileArgs = profile !== "dev" ? ["--release"] : [];
     const cargoFlags = (
       (funcArgs || {}).cargoFlags ||
@@ -126,12 +133,14 @@ class RustPlugin {
   }
 
   localSourceDir(funcArgs, profile, platform) {
-    let executable = "target";
+    let targetPath = (funcArgs || {}).targetDir ||
+        this.custom.targetDir;
+    targetPath = path.join(targetPath, "target");
     if (MUSL_PLATFORMS.includes(platform)) {
       let target = (funcArgs || {}).target || this.custom.target
-      executable = path.join(executable, target ? target : "x86_64-unknown-linux-musl");
+      targetPath = path.join(targetPath, target ? target : "x86_64-unknown-linux-musl");
     }
-    return path.join(executable, profile !== "dev" ? "release" : "debug");
+    return path.join(targetPath, profile !== "dev" ? "release" : "debug");
   }
 
   localArtifactDir(profile) {
@@ -152,7 +161,7 @@ class RustPlugin {
     );
 
     const env = this.localBuildEnv(funcArgs, process.env, platform());
-    this.serverless.cli.log(`Running local cargo build on ${platform()}`);
+    this.serverless.cli.log(`Running local cargo build on ${platform()} with args: ${args}`);
 
     const buildResult = spawnSync("cargo", args, {
       ...NO_OUTPUT_CAPTURE,
@@ -205,7 +214,7 @@ class RustPlugin {
       "-e",
       `BIN=${binary}`,
       `-v`,
-      `${srcPath}:/code`,
+      `${srcPath}/crates/`,
       `-v`,
       `${cargoRegistry}:/cargo/registry`,
       `-v`,
